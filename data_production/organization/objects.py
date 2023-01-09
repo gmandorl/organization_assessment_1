@@ -1,7 +1,7 @@
 import numpy as np
 import skimage.measure as skm
 import shapely.geometry as spg
-
+from scipy import ndimage
 
 
 
@@ -16,7 +16,8 @@ class make_objects :
     def __init__(self, image):
         "Create the regions and polynoms, they have the same order"
 
-        labeled  = skm.label(image, background=0 , connectivity=1) #connect also in diagonal (default is 1)
+        image    = ndimage.binary_fill_holes(image).astype(int)  # fill holes
+        labeled  = skm.label(image, background=0 , connectivity=2) #connect also in diagonal (default is 1)
         regions  = skm.regionprops(labeled)
 
 
@@ -40,16 +41,16 @@ class make_objects :
 
 
 
-        #I need these nested loop to remove holes in objects and to eventual other objects inside
-        for n in range(len(polynoms)-1, -1, -1) :
-            for m in range(len(polynoms)-1, n, -1) :
-                if polynoms[n].distance(polynoms[m]) == 0 :
-                    if polynoms[n].area > polynoms[m].area :
-                        del polynoms[m]
-                        del regions[m]
-                    else :
-                        del polynoms[n]
-                        del regions[n]
+        ##I need these nested loop to remove holes in objects and to eventual other objects inside
+        #for n in range(len(polynoms)-1, -1, -1) :
+            #for m in range(len(polynoms)-1, n, -1) :
+                #if polynoms[n].distance(polynoms[m]) == 0 :
+                    #if polynoms[n].area > polynoms[m].area :
+                        #del polynoms[m]
+                        #del regions[m]
+                    #else :
+                        #del polynoms[n]
+                        #del regions[n]
 
 
         self.labeled  = labeled # saved to be drawn in run_metrics
@@ -65,16 +66,6 @@ class make_objects :
         self.number_of_objects = len(self.polynoms)
 
 
-
-
-    #def compute_distance_regions_2Darray (self, diagonal_values = 0) :
-        #dist_x = np.array([c.centroid[1] for c in self.list_objects]) - np.array([c.centroid[1] for c in self.list_objects])[:,None]
-        #dist_y = np.array([c.centroid[0] for c in self.list_objects]) - np.array([c.centroid[0] for c in self.list_objects])[:,None]
-        #distances =  np.sqrt(dist_x**2 + dist_y**2)
-        #""" diagonal have all zeros. Therefore the min() over rows and columns are zeros
-        #fill_diagonal function set the diagonal to a high value"""
-        #np.fill_diagonal(distances, diagonal_values)
-        #return distances
 
 
 
@@ -125,22 +116,7 @@ class make_pairs:
             distances[i] = self.correct_distance(i)
         return distances
 
-        """
-        self.list_polys   = sky_regions.list_polys
-        self.sky_regions  = sky_regions
 
-
-        self.region_pairs  = list(gen_tuplelist2(self.list_regions, self.list_polys))
-        self.poly_pairs = list(gen_tuplelist2(self.list_polys, self.list_polys))
-
-        if self.region_pairs:
-            self.partner1, self.partner2 = zip(*self.region_pairs)  # their length is N(N+1)/2
-        else:
-            self.partner1, self.partner2 = [], []
-
-        self.destances_regions = self.compute_distance_regions()
-        self.destances_polys = self.compute_distance_polys()
-        """
 
 
 

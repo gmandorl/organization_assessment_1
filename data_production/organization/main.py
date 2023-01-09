@@ -11,8 +11,6 @@ from run_metrics import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config_data",default="config_TOOCAN",help="name of the input config file")
-#parser.add_argument("-F", "--From",default="1/1/2018",  help="initial date")
-#parser.add_argument("-T", "--To",  default="31/3/2018", help="final date")
 parser.add_argument("-p", "--property", default='P1', help="property under study")
 parser.add_argument("-m", "--month", default=1,    type=int, help="month")
 parser.add_argument("-y", "--year",  default=2013, type=int, help="year")
@@ -37,7 +35,7 @@ if __name__ == '__main__':
     print('number of files: ', len(file_names))
 
 
-    # loop over all che modification of the file "studied_property"
+    # loop over all the modification of the file "studied_property"
     cases = studied_property.cases
     for k in cases.keys() :
 
@@ -90,7 +88,7 @@ if __name__ == '__main__':
 
         if len(df)==0 : print('empty dataset')
         else :
-            folder_out = f'output/tmp/{config.label}/{studied_property.folder_out}/{k}/'
+            folder_out = f'output/tmp/{config.label}/{studied_property.label}/{k}/'
             if not os.path.isdir(folder_out) : os.makedirs(folder_out)
             df.to_csv(f'{folder_out}{studied_property.fname_out}_{k}___{args.year}_{args.month}.csv', index=False)
 
