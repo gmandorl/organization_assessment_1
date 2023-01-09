@@ -2,18 +2,14 @@ import numpy as np
 
 
 
-label = 'F3'
-
-folder_out = 'F3'
+label      = 'F3'
 fname_out  = 'F3'
 
 cases = dict()
 cases[f'base'] = 0
-#cases[f'smaller1'] = 1
 for n in range(1,11) :
     cases[f'smaller{n}'] = n
-#for n in range(11,21) :
-    #cases[f'smaller{n}'] = n
+
 
 def modify_image ( *args ) :
     image = args[0]

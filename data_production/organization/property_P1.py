@@ -1,21 +1,18 @@
 import numpy as np
 
 
-label = 'P1'
-
-folder_out = 'P1'
+label      = 'P1'
 fname_out  = 'P1'
 
 cases = dict()
 cases['base']    = 0
-#cases['plusObj'] = 1
+cases['plusObj'] = 1
 
 
 def modify_image ( *args ) :
     image = args[0]
     n     = args[1]
 
-    if n==0 : return image
 
     sh    = image.shape
     to_add = np.zeros((sh[0],2))

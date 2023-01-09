@@ -2,10 +2,9 @@ import numpy as np
 #import matplotlib.pyplot as plt
 from objects import *
 import copy
+from scipy import ndimage
 
-label = 'P9'
-
-folder_out = 'P9'
+label      = 'P9'
 fname_out  = 'P9'
 
 cases = dict()
@@ -19,25 +18,26 @@ def modify_image ( *args ) :
 
 
     if n!=0 :
-        objects_original  = make_objects(image)   # class containing regions and polynoms
-        number_original   = objects_original.number_of_objects
+        filled_im         = ndimage.binary_fill_holes(image).astype(int)  # fill holes
+        #objects_original  = make_objects(image)   # class containing regions and polynoms
+        #number_original   = objects_original.number_of_objects
 
-        added = False
-        while not added :
-            idx1 = np.random.randint(image.shape[0])
-            idx2 = np.random.randint(image.shape[1])
-            #print('INDICES: ', idx1, idx2, added)
-            if np.sum(image[max(idx1-1,0):min(idx1+1,image.shape[0]-1),
-                            max(idx2-1,0):min(idx2+1,image.shape[1]-1)])==0 :
+        numb_in_3x3 = filled_im[0:-2, :-2] + filled_im[2:, :-2] + filled_im[1:-1, :-2] + \
+                      filled_im[0:-2,1:-1] + filled_im[2:,1:-1] + filled_im[1:-1,1:-1] + \
+                      filled_im[0:-2,2:  ] + filled_im[2:,2:  ] + filled_im[1:-1,2:  ]
 
-                image_tmp = copy.deepcopy(image)
-                image_tmp[idx1,idx2]=1
-                objects_plus1  = make_objects(image_tmp)
-                if number_original < objects_plus1.number_of_objects :
-                    image[idx1,idx2]=2
-                    added=True
+        idx_edges = np.argwhere(numb_in_3x3 == 0)
+        N = idx_edges.shape[0]
 
+        if idx_edges.shape[0]==0 : return image
+        else :
+            nth_candidate = np.random.randint(N)
+            idx1 = idx_edges[nth_candidate][0]+1
+            idx2 = idx_edges[nth_candidate][1]+1
 
+            image[idx1,idx2]=1
+
+        #plt.imshow(objects_original.labeled)
         #plt.imshow(image)
         #plt.show()
 

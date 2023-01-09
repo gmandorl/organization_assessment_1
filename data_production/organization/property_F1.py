@@ -2,13 +2,11 @@ import numpy as np
 
 
 
-label = 'F1'
-
-folder_out = 'F1'
+label      = 'F1'
 fname_out  = 'F1'
 
 cases = dict()
-#cases[f'base'] = 0
+cases[f'base'] = 0
 for n in range(1,7) :
     cases[f'reso{n}'] = n
 
