@@ -25,7 +25,7 @@ def run_metrics (image) :
     properties['SCAI']      = metrics.SCAI(pairs_of_objects, image_size=image.size)
     properties['MCAI']      = metrics.MCAI(pairs_of_objects, image_size=image.size)
     properties['COP']       = metrics.COP(pairs_of_objects)
-    properties['ABCOP']     = metrics.ABCOP(pairs_of_objects)
+    properties['ABCOP']     = metrics.ABCOP(pairs_of_objects, image_size=image.size)
     properties['ROME']      = metrics.ROME(pairs_of_objects)
     properties['ROME_norm'] = properties['ROME'] / properties['area_skm'] * properties['number']
     properties['Iorg']      = metrics.Iorg(pairs_of_objects, image_size=image.size)

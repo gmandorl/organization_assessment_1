@@ -102,7 +102,10 @@ def ABCOP(pairs_of_objects, image_size=1):
     areas_1 = pairs_of_objects.objects.areas
     areas_2 = pairs_of_objects.objects.areas[:,None]
 
-    distances = copy.deepcopy(pairs_of_objects.distance_edges)
+    #distances = copy.deepcopy(pairs_of_objects.distance_edges)   # distances using edges with skimage
+    diameter_1 = pairs_of_objects.objects.diameters
+    diameter_2 = pairs_of_objects.objects.diameters[:,None] #transpose the vector
+    distances = np.maximum(1, pairs_of_objects.distance_centroids - 0.5 * (diameter_1 + diameter_2) )
     np.fill_diagonal(distances, np.nan)
 
     V_area = 0.5 * (areas_1 + areas_2) / distances
@@ -169,15 +172,15 @@ def MCAI(pairs_of_objects, image_size = 1):
     diameter_2 = pairs_of_objects.objects.diameters[:,None] #transpose the vector
     v = np.array(0.5 * (diameter_1 + diameter_2) / pairs_of_objects.distance_centroids)
 
-    d2 = pairs_of_objects.distance_centroids - 0.5 * (diameter_1 + diameter_2)
+    d2 = np.maximum(0, pairs_of_objects.distance_centroids - 0.5 * (diameter_1 + diameter_2) )
     d2 = np.nansum(d2) * 0.5 # 0.5 is needed to avoid double counting
     L = math.sqrt(image_size)
 
     # correction of characteristic length
-    max_edges_x = objects.centroids[:,0] + objects.diameters
-    min_edges_x = objects.centroids[:,0] - objects.diameters
-    max_edges_y = objects.centroids[:,1] + objects.diameters
-    min_edges_y = objects.centroids[:,1] - objects.diameters
+    max_edges_x = objects.centroids[:,0] + 0.5*objects.diameters
+    min_edges_x = objects.centroids[:,0] - 0.5*objects.diameters
+    max_edges_y = objects.centroids[:,1] + 0.5*objects.diameters
+    min_edges_y = objects.centroids[:,1] - 0.5*objects.diameters
 
     L_x = np.max(max_edges_x) - np.min(min_edges_x)
     L_y = np.max(max_edges_y) - np.min(min_edges_y)
