@@ -29,18 +29,25 @@ if __name__ == '__main__':
     METRICS = [m for m in METRICS if m not in ['year', 'month', 'day', 'hour', 'minute', 'day_of_year']]
     print(METRICS)
 
-    for METRIC in METRICS :
-        print(METRIC)
-        compare_2d( METRIC              = METRIC,
-                    df_original         = df_original,
-                    df_modified         = df_modified,
-                    axis_label_original = METRIC,
-                    axis_label_modified = f'{METRIC} with one additional object',
-                    nbins               = 6,
-                    folder              = f'figure/{args.dataset}/2d_comparison'
-                    )
+    #for METRIC in METRICS :
+        #print(METRIC)
+        #compare_2d( METRIC              = METRIC,
+                    #df_original         = df_original,
+                    #df_modified         = df_modified,
+                    #axis_label_original = METRIC,
+                    #axis_label_modified = f'{METRIC} with one additional object',
+                    #folder_out          = f'figure/{args.dataset}/2d_comparison'
+                    #)
 
-    variation_all( METRICS, df_original, df_modified)
+    var_to_exclude = ['number', 'area', 'area_skm', 'area_spg']
+    METRICS = [x for x in METRICS if x not in var_to_exclude]
+
+    variation_all( METRICS,
+                   df_original,
+                   df_modified,
+                   folder_out = f'figure/{args.dataset}',
+                   extra_text =''
+                   )
 
 
 
