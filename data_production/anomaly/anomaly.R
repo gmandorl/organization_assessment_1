@@ -31,7 +31,7 @@ for (fname in flist) {
     print(fname)
 
     dn              =  read.csv( paste(path_data, fname, sep='') )
-    dn_annual_cycle =  read.csv( paste(path_cycle, 'annualCycle___', args[1], '_base.csv', sep='') )
+    dn_annual_cycle =  read.csv( paste(path_cycle, 'annualCycleFit___', args[1], '_base.csv', sep='') )
 #     dn_annual_cycle =  read.csv( paste(path_cycle, 'annualCycle___', fname, sep='') )
 
     dn$day_of_year   <- day_of_year(dn)
