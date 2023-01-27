@@ -12,7 +12,7 @@ def Iorg(pairs_of_objects, image_size = 1):
     """Iorg according to [Tompkins et al. 2017]"""
 
     if pairs_of_objects.objects.number_of_objects<2 :
-        return np.nan
+        return np.nan, np.nan
 
 
     #distances = np.array(all_pairs.get_distance_regions())
@@ -36,7 +36,7 @@ def Iorg(pairs_of_objects, image_size = 1):
     data_cdf = np.append(   data_cdf, 1)
     #print("\n\n da integrare \n", weib_cdf, data_cdf)
 
-    return sp.integrate.trapz(data_cdf, weib_cdf)
+    return sp.integrate.trapz(data_cdf, weib_cdf), np.mean(dist_min)
 
 
 
