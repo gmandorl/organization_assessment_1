@@ -7,7 +7,6 @@ import glob
 import os
 import argparse
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--pFolder", default='P1', help="folder where to merge the files")
 parser.add_argument("-d", "--dataset", default='TOOCAN', help="folder where to merge the files")
@@ -36,6 +35,8 @@ if __name__ == '__main__':
         df.to_csv(f'{folder_out}{fname}.csv', index=False)
 
 
-
+    if args.pFolder=='P3' :
+        import select_events_in_P3
+        select_events_in_P3.select_events_in_P3(args.dataset)
 
     print(f'This script needed {(datetime.datetime.now() - start_time).seconds} seconds')
