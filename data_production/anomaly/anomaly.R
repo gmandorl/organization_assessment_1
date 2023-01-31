@@ -18,6 +18,11 @@ path_data  <- paste('../organization/output/merged/', dataset, '/', args[1], '/'
 path_cycle <- paste('output/', dataset, '/', args[1], '/', sep='')
 flist <- list.files(path=path_data)
 
+if (args[1]=='P2'){
+    if (args[2]=='1') { flist = flist[1:15] }
+    if (args[2]=='2') { flist = flist[15:length(flist)] }
+}
+
 
 hour_steps    <- seq(0, 23)
 minute_steps  <- c(0, 30)
@@ -30,8 +35,13 @@ day_of_year_steps   <- seq(1, 365)
 for (fname in flist) {
     print(fname)
 
-    dn              =  read.csv( paste(path_data, fname, sep='') )
-    dn_annual_cycle =  read.csv( paste(path_cycle, 'annualCycleFit___', args[1], '_base.csv', sep='') )
+    fname_cycles <- paste(args[1], '_base.csv', sep='')
+    if ( grepl( 'F', args[1], fixed = TRUE) ) {
+        fname_cycles <- fname
+        print(fname_cycles)
+        }
+    dn              <- read.csv( paste(path_data, fname, sep='') )
+    dn_annual_cycle <- read.csv( paste(path_cycle, 'annualCycleFit___', fname_cycles, sep='') )
 #     dn_annual_cycle =  read.csv( paste(path_cycle, 'annualCycle___', fname, sep='') )
 
     dn$day_of_year   <- day_of_year(dn)
@@ -57,6 +67,8 @@ for (fname in flist) {
 
             for (c in colnames(dn_anomly)) {
                 if(c %in% c("year", "month", "day", "hour", "minute", "day_of_year")) {next}
+
+
                 dn_anomly_tmp[[c]] <- sapply(dn_anomly_tmp[[c]], function(x, y){x-y}, y=annual_mean[[c]])
             }
             dn_anomly <- rbind(dn_anomly_tmp, dn_anomly)
