@@ -64,6 +64,7 @@ def draw_and_save (METRICS,
 def variation_all( METRICS,
                    df_original,
                    df_modified,
+                   factors,
                    folder_out = 'figure',
                    extra_text = ''
                    ) :
@@ -83,7 +84,7 @@ def variation_all( METRICS,
     #print(df_original, '\n', std, std['ABCOP'])
 
     for METRIC in METRICS :
-        df_difference[METRIC] = (df_modified[METRIC] - df_original[METRIC]) / std[METRIC]
+        df_difference[METRIC] = (df_modified[METRIC]*factors[METRIC] - df_original[METRIC]) / std[METRIC]
         Z_metric = df_difference[METRIC].to_numpy()
         print(METRIC, '    \t ', np.nanmean(np.abs(Z_metric)))
 

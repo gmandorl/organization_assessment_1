@@ -62,12 +62,14 @@ def compare_2d( METRIC,
                 df_modified,
                 axis_label_original,
                 axis_label_modified,
+                factors,
                 nbins      = 50,
                 folder_out = "figure/2d_comparison/"
                 ) :
 
     original = df_original[METRIC]
-    modified = df_modified[METRIC]
+    modified = df_modified[METRIC] * factors[METRIC]
+
 
     # select where there are non NAN values
     non_NAN = np.logical_and( np.isfinite(original),
