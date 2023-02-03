@@ -19,6 +19,6 @@ python main.py -y $yy -m 9  -p $PROP &
 python main.py -y $yy -m 10 -p $PROP &
 python main.py -y $yy -m 11 -p $PROP &
 python main.py -y $yy -m 12 -p $PROP
-sleep 200
+sleep 100
 done
 

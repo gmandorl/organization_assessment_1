@@ -7,7 +7,7 @@ fname_out  = 'P2'
 
 cases = dict()
 cases[f'base'] = 0
-for n in range(1,21) :
+for n in range(1,39) :
     cases[f'shift{n}'] = n
 
 
