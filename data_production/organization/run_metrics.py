@@ -25,13 +25,16 @@ def run_metrics (image) :
     properties['area_spg']  = objects.area_spg
     properties['number']    = objects.number_of_objects
 
-    properties['Iorg'], properties['nearest_neighbor'] = metrics.Iorg(pairs_of_objects, image_size=image_size)
+    properties['Iorg']      = metrics.Iorg(pairs_of_objects, image_size=image_size)
     properties['SCAI']      = metrics.SCAI(pairs_of_objects, image_size=image_size)
     properties['MCAI']      = metrics.MCAI(pairs_of_objects, image_size=image_size)
     properties['COP']       = metrics.COP(pairs_of_objects)
     properties['ABCOP']     = metrics.ABCOP(pairs_of_objects, image_size=image_size)
     properties['ROME']      = metrics.ROME(pairs_of_objects)
     properties['MICA']      = metrics.MICA(pairs_of_objects, image_size=image_size)
+    properties['NN_center'] = metrics.NN_center(pairs_of_objects)
+    properties['NN_edge']   = metrics.NN_edge(pairs_of_objects)
+
 
 
     properties['ROME_norm'] = properties['ROME'] / properties['area'] * properties['number']

@@ -12,7 +12,7 @@ def Iorg(pairs_of_objects, image_size = 1):
     """Iorg according to [Tompkins et al. 2017]"""
 
     if pairs_of_objects.objects.number_of_objects<2 :
-        return np.nan, np.nan
+        return np.nan
 
 
     #distances = np.array(all_pairs.get_distance_regions())
@@ -36,7 +36,7 @@ def Iorg(pairs_of_objects, image_size = 1):
     data_cdf = np.append(   data_cdf, 1)
     #print("\n\n da integrare \n", weib_cdf, data_cdf)
 
-    return sp.integrate.trapz(data_cdf, weib_cdf), np.mean(dist_min)
+    return sp.integrate.trapz(data_cdf, weib_cdf)
 
 
 
@@ -67,6 +67,23 @@ def ROME(pairs_of_objects):
 
 
 
+#######################################################################################
+##############################  Distances Nearest Neighbor  ###########################
+#######################################################################################
+
+def NN_center(pairs_of_objects) :
+    """distance between centers of Nearest Neighbors"""
+    if pairs_of_objects.objects.number_of_objects<2 : return np.nan
+
+    dist_min = np.nanmin(pairs_of_objects.distance_centroids, axis=1)
+    return np.mean(dist_min)
+
+def NN_edge(pairs_of_objects) :
+    """distance between edges of Nearest Neighbors"""
+    if pairs_of_objects.objects.number_of_objects<2 : return np.nan
+
+    dist_min = np.nanmin(pairs_of_objects.distance_edges, axis=1)
+    return np.mean(dist_min)
 
 
 
