@@ -18,6 +18,7 @@ args = parser.parse_args()
 
 config=importlib.import_module( args.config_data )
 studied_property=importlib.import_module( f'property_{args.property}' )
+to_exclude=importlib.import_module( f'to_exclude_{config.label}' )
 
 
 
@@ -53,15 +54,9 @@ if __name__ == '__main__':
             #print(fn)
 
             ds  = xr.open_dataset(fn)
-            ds  = ds.sel(latitude  = slice(config.lat_min, config.lat_max),
-                        longitude = slice(config.lon_min, config.lon_max) )
-            reverse = -1 if config.cut_reversed else 1
-            image = np.where( reverse*ds.variables[config.var_name].data[0] > reverse*config.cut, 1, 0 )
-            #print('\noriginal shape: ', image.shape)
-            image = studied_property.modify_image(image, cases[k])
-            image = np.where(image>0, 1, 0)
-            image_time = ds.attrs['image_time']  # in the format 2018-06-06-T10-30-00 UTC
 
+            # read day and time
+            image_time = ds.attrs['image_time']  # in the format 2018-06-06-T10-30-00 UTC
             yy = image_time[ :4]
             mm = image_time[5:7]
             dd = image_time[8:10]
@@ -75,6 +70,20 @@ if __name__ == '__main__':
                             'minute':  mi
                             }
             df_time_tmp = pd.DataFrame(df_time_tmp, index=[1])
+            date = (int(yy), int(mm), int(dd), int(hh), int(mi))
+            if date in to_exclude.repeated_images :
+                df      = pd.concat([df, df_time_tmp])
+                continue
+
+
+            # select the region and run the organization algorithms
+            ds  = ds.sel(latitude  = slice(config.lat_min, config.lat_max),
+                        longitude = slice(config.lon_min, config.lon_max) )
+            reverse = -1 if config.cut_reversed else 1
+            image = np.where( reverse*ds.variables[config.var_name].data[0] > reverse*config.cut, 1, 0 )
+            image = studied_property.modify_image(image, cases[k])
+            image = np.where(image>0, 1, 0)
+
 
             #print(yy,mm,dd,hh,mi)
 
