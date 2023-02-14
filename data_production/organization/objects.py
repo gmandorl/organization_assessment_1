@@ -85,18 +85,26 @@ class make_pairs:
         self.number_of_combinations = objects.number_of_objects * (objects.number_of_objects-1) / 2
 
 
-        self.distance_centroids = self.compute_distance_centroids ()
-        self.distance_edges     = self.compute_distance_edges ()
+        self.compute_distance_centroids ()
+        self.compute_distance_edges ()
+
 
 
 
     def compute_distance_centroids (self) :
         centroids = self.objects.centroids
-        dist_x = np.array([c[1] for c in centroids]) - np.array([c[1] for c in centroids])[:,None]
-        dist_y = np.array([c[0] for c in centroids]) - np.array([c[0] for c in centroids])[:,None]
+        xs  = np.array([c[1] for c in centroids])
+        ys  = np.array([c[0] for c in centroids])
+
+        # compute the distances
+        dist_x = xs - xs[:,None]
+        dist_y = ys - ys[:,None]
         distances =  np.sqrt(dist_x**2 + dist_y**2)
-        np.fill_diagonal(distances, np.nan)
-        return distances
+        np.fill_diagonal(distances, np.nan)  # it is inplace
+        self.distance_centroids = distances
+
+        # compute the nearest neighbour distance
+        self.dist_min = np.nanmin(distances, axis=0) if self.number_of_objects > 1 else np.nan
 
 
     def compute_distance_edges (self) :
@@ -106,15 +114,9 @@ class make_pairs:
                 distance_edges[m,n] = self.objects.polynoms[n].distance(self.objects.polynoms[m])
                 distance_edges[n,m] = distance_edges[m,n]
                 #if distance_edges[n,m]==0 : print('WARNING: distance between edges is zero')
-        return distance_edges
+        self.distance_edges =  distance_edges
 
 
-        """The shortest distance in units of pixels between edges of cloud-objects given by shapely.MultiPolygon."""
-        distances = np.array([self.poly_pairs[i][0].distance(self.poly_pairs[i][1]) for i in range(len(self.poly_pairs))])
-        for i in np.where(distances==0)[0] :
-            print ("\n index ",i)
-            distances[i] = self.correct_distance(i)
-        return distances
 
 
 

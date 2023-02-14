@@ -26,6 +26,7 @@ def run_metrics (image) :
     properties['number']    = objects.number_of_objects
 
     properties['Iorg']      = metrics.Iorg(pairs_of_objects, image_size=image_size)
+    #properties['Iorg2']     = metrics.Iorg2(pairs_of_objects, image_size=image_size)
     properties['SCAI']      = metrics.SCAI(pairs_of_objects, image_size=image_size)
     properties['MCAI']      = metrics.MCAI(pairs_of_objects, image_size=image_size)
     properties['COP']       = metrics.COP(pairs_of_objects)
@@ -33,7 +34,7 @@ def run_metrics (image) :
     properties['ROME']      = metrics.ROME(pairs_of_objects)
     properties['MICA']      = metrics.MICA(pairs_of_objects, image_size=image_size)
     properties['NN_center'] = metrics.NN_center(pairs_of_objects)
-    properties['NN_edge']   = metrics.NN_edge(pairs_of_objects)
+    #properties['NN_edge']   = metrics.NN_edge(pairs_of_objects)
 
 
 

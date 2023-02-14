@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import scipy as sp
+from scipy import special
 import copy
 
 
@@ -14,9 +15,14 @@ def Iorg(pairs_of_objects, image_size = 1):
     if pairs_of_objects.objects.number_of_objects<2 :
         return np.nan
 
+    # Weger et al. 1992 states that Iorg is not valid for total area > 10% of the image
+    if np.sum(pairs_of_objects.objects.areas) > 0.10 * image_size :
+        return np.nan
 
-    #distances = np.array(all_pairs.get_distance_regions())
-    dist_min = np.nanmin(pairs_of_objects.distance_centroids, axis=1)
+
+
+    #dist_min = np.nanmin(pairs_of_objects.distance_centroids, axis=1)
+    dist_min = pairs_of_objects.dist_min
 
 
     # the theoretical Weibull-distribution for n particles
@@ -36,7 +42,56 @@ def Iorg(pairs_of_objects, image_size = 1):
     data_cdf = np.append(   data_cdf, 1)
     #print("\n\n da integrare \n", weib_cdf, data_cdf)
 
-    return sp.integrate.trapz(data_cdf, weib_cdf)
+
+    #return sp.integrate.trapz(data_cdf, weib_cdf)  # DO NO USE trapz ! trapz return always >0.5 for N=2
+    integral = np.sum ( data_cdf[:-1] * ( weib_cdf[1:] - weib_cdf[:-1] ) )
+    return integral
+
+
+
+#######################################################################################
+######################################## I_org 2 ######################################
+#######################################################################################
+
+def Iorg2(pairs_of_objects, image_size = 1):
+    """Iorg according to [Tompkins et al. 2017]"""
+
+    if pairs_of_objects.objects.number_of_objects<3 :
+        return np.nan
+
+    # Weger et al. 1992 states that Iorg is not valid for total area > 10% of the image
+    if np.sum(pairs_of_objects.objects.areas) > 0.10 * image_size :
+        return np.nan
+
+
+    # distances from objects
+    distance_centroids = pairs_of_objects.distance_centroids
+    dist_NN            = pairs_of_objects.dist_min
+
+    # compute second nearest distance
+    dist_minus_NN  = distance_centroids - dist_NN
+    dist_SNN       = np.nanmin(np.where(dist_minus_NN==0, np.nan, dist_minus_NN), axis=0)
+    dist_SNN       = dist_SNN + dist_NN
+
+
+
+    # the theoretical Weibull-distribution for n particles
+    u_dist_SNN, u_dist_SNN_counts = np.unique(dist_SNN, return_counts=True)
+    lamda = pairs_of_objects.number_of_objects / image_size
+    mand_cdf = 1 - np.exp(- lamda * math.pi * u_dist_SNN**2) * ( 1 + lamda * math.pi * u_dist_SNN**2 )
+
+    # the CDF from the actual data
+    data_cdf = np.cumsum(u_dist_SNN_counts / np.sum(u_dist_SNN_counts))
+
+
+    # compute the integral between theoretical CDF and data CDF
+    mand_cdf = np.append(0, mand_cdf   )
+    mand_cdf = np.append(   mand_cdf, 1)
+    data_cdf = np.append(0, data_cdf   )
+    data_cdf = np.append(   data_cdf, 1)
+
+    integral = np.sum ( data_cdf[:-1] * ( mand_cdf[1:] - mand_cdf[:-1] ) )
+    return integral
 
 
 
@@ -75,7 +130,7 @@ def NN_center(pairs_of_objects) :
     """distance between centers of Nearest Neighbors"""
     if pairs_of_objects.objects.number_of_objects<2 : return np.nan
 
-    dist_min = np.nanmin(pairs_of_objects.distance_centroids, axis=1)
+    dist_min = pairs_of_objects.dist_min
     return np.mean(dist_min)
 
 def NN_edge(pairs_of_objects) :
