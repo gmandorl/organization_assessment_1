@@ -80,9 +80,28 @@ def make_plot(DF, var_on_x, var_to_group, fname) :
 
         # save the plot
         str_to_group = var_to_group + '_'*(9-len(fname))
-        fname_out = f'{fname}_fit___{str_to_group}___{var_on_x}___{vs}'
-        plt.savefig(f'figure/{args.dataset}/{args.property}/{fname}/{fname_out}.png')
+        fname_out  = f'{fname}_fit___{str_to_group}___{var_on_x}___{vs}'
+        folder_out = f'figure/{args.dataset}/{args.property}/{fname}'
+        if not os.path.isdir(folder_out) : os.makedirs(folder_out)
+        plt.savefig(f'{folder_out}/{fname_out}.png')
         plt.cla()
+
+    plt.close()
+
+
+def fill_missing_hours_and_days (df) :
+    """ dd missing 'day_of_year' and 'half_hour' if needed (P3 needs this) """
+
+    df_to_append = pd.DataFrame(columns=['day_of_year','half_hour'])
+    for dd in range(1, 365+1) :
+        for hh in range(0, 48) :
+            if len(df.query(f'(day_of_year=={dd}) & (half_hour=={hh/2.})')) == 0 :
+                df_to_append = df_to_append.append(dict(day_of_year=dd, half_hour=hh/2.), ignore_index=True)
+
+    #print('DEBUG', df)
+    #print('df_to_append', df_to_append)
+    df = df.append(df_to_append, ignore_index=True)
+    return df
 
 
 if __name__ == '__main__':
@@ -100,6 +119,12 @@ if __name__ == '__main__':
         df['half_hour']   = df['hour'] + df['minute']/60.
         df['day_of_year'] = df.apply(lambda x: compute_day_of_year(x['year'], x['month'], x['day']), axis=1)
         df['day_of_year'] = df['day_of_year'] - (df['day_of_year'] > 59)*(df['year']%4==0)  # 29/2 is considered 28/2
+
+
+        # add missing 'day_of_year' and 'half_hour' if needed (P3 needs this)
+        if args.property=='P3' : df = fill_missing_hours_and_days (df)
+
+
 
         # mean and non NAN count
         DFg     = df.groupby(['day_of_year','half_hour'])
@@ -125,6 +150,8 @@ if __name__ == '__main__':
             uncertainty = std / (counts+0.0001)**0.5 # the bias is to take care of counts=0
             var         = np.where(np.isfinite(var), var, mean)
 
+            #print('SHAPE',  xdata.shape, var.shape)
+
             # perform the fit
             fit_params, fit_params_errors = spo.curve_fit(fitting_function, xdata, var,
                                                           sigma=uncertainty, maxfev = 10000)
@@ -137,11 +164,14 @@ if __name__ == '__main__':
             # chi2
             Z    = var - var_fit
             dZ   = uncertainty
-            chi2 = np.sum(Z*Z / (dZ*dZ)) / (365*48 - len(fit_params))
-            print(vs, '\nChi2: ', chi2)
+            ndf  = (365*48 - len(fit_params))
+            chi2 = np.sum(Z*Z / (dZ*dZ)) / ndf
+            print(vs, '\nChi2: ', chi2, ' \t Chi2 / sigma( Chi2 ) :  ', (chi2-1)*(ndf/2.)**0.5 )
 
 
-        DF.to_csv(f'output/{args.dataset}/{args.property}/annualCycleFit___{fname}')
+        folder_out_df = f'output/{args.dataset}/{args.property}'
+        if not os.path.isdir(folder_out_df) : os.makedirs(folder_out_df)
+        DF.to_csv(f'{folder_out_df}/annualCycleFit___{fname}')
 
 
         make_plot(DF.reset_index(), 'day_of_year', 'half_hour', fname[:-4])

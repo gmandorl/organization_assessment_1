@@ -18,9 +18,12 @@ path_data  <- paste('../organization/output/merged/', dataset, '/', args[1], '/'
 path_cycle <- paste('output/', dataset, '/', args[1], '/', sep='')
 flist <- list.files(path=path_data)
 
-if (args[1]=='P2'){
-    if (args[2]=='1') { flist = flist[1:15] }
-    if (args[2]=='2') { flist = flist[15:length(flist)] }
+if (length(flist)>15){
+    len <- as.integer( length(flist) / 4 )
+    if (args[2]=='1') { flist <- flist[ seq(    1,          len ) ] }
+    if (args[2]=='2') { flist <- flist[ seq(  len,        2*len ) ] }
+    if (args[2]=='3') { flist <- flist[ seq(2*len,        3*len ) ] }
+    if (args[2]=='4') { flist <- flist[ seq(3*len, length(flist)) ] }
 }
 
 
@@ -66,7 +69,7 @@ for (fname in flist) {
             if(nrow(annual_mean)>1) {print('ERROR! More than one value in the annual mean')}
 
             for (c in colnames(dn_anomly)) {
-                if(c %in% c("year", "month", "day", "hour", "minute", "day_of_year")) {next}
+                if(c %in% c("year", "month", "day", "hour", "minute", "day_of_year", "number_original", "area_original")) {next}
 
 
                 dn_anomly_tmp[[c]] <- sapply(dn_anomly_tmp[[c]], function(x, y){x-y}, y=annual_mean[[c]])
@@ -78,7 +81,7 @@ for (fname in flist) {
     }
 
     dn_anomly = dn_anomly[with(dn_anomly, order(year, month, day, hour, minute)),]
-    print(head(dn_anomly))
+#     print(head(dn_anomly))
     write.csv(dn_anomly, paste(path_cycle, 'anomaly___', fname, sep=''), row.names = FALSE)
 
 
