@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import xarray as xr
 import datetime
 import os
-
+import warnings
 
 
 def draw_and_save ( METRIC,
@@ -16,8 +16,13 @@ def draw_and_save ( METRIC,
 
     fig, ax   = plt.subplots( figsize=(8,6) )
 
+    # take care of when H2 is a delta function
+    bin_width = H2[1][1] - H2[1][0]
+    if bin_width<1e-20 : return
+    if np.sum(H2[0])<1e-20 : return
+
     # transform the histogram into density
-    SF         =  100 / np.sum(H2[0]) / (H2[1][1] - H2[1][0])**2
+    SF         =  100 / np.sum(H2[0]) / bin_width**2
     h2_to_plot =  H2[0]
     h2_to_plot =  h2_to_plot * SF
 
@@ -27,9 +32,20 @@ def draw_and_save ( METRIC,
     yedges  = ( H2[2][:-1] + H2[2][1:] ) / 2.
 
     # z limits
-    levels  = np.linspace (SF, h2_to_plot.max(), 11)
-    ticks = np.array([levels[0], levels[2], levels[4], levels[6], levels[8], levels[10]])
-    ticks_round = np.around(ticks if not set_log else np.exp(ticks), 1)
+    levels  = np.linspace (SF, h2_to_plot.max() if not set_log else np.log(h2_to_plot.max()), 11)
+    ticks   = np.array([levels[0], levels[2], levels[4], levels[6], levels[8], levels[10]])
+    ticks_round = np.around(ticks, 1)
+
+    # z limits for the log scale
+    if set_log :
+        levels  = np.linspace ( -4, 0, 9)
+        ticks   = np.array([levels[0], levels[2], levels[4], levels[6], levels[8]])
+        ticks_round = np.around((10**ticks), 4)
+        #ticks_round = (10**ticks).astype(int)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            h2_to_plot  = np.log10(h2_to_plot)
+
 
     # plot the density
     h2_to_plot = np.where(h2_to_plot>levels[0], h2_to_plot, np.nan)
@@ -38,12 +54,14 @@ def draw_and_save ( METRIC,
     # plot the diagonal
     range_min = xedges[1]
     range_max = xedges[-2]
-    plt.plot( (range_min,range_max),(range_min,range_max), range_max, color='r', linestyle='--', linewidth=2)
+    plt.plot( (range_min,range_max),(range_min,range_max), color='r', linestyle='--', linewidth=2)
 
     # add colorbar
     fig.subplots_adjust(left=0.15, right=0.82)  # add a new axix to the right
     cbar_ax = fig.add_axes([0.84, 0.2, 0.01, 0.6])
-    fig.colorbar(contourf_, cax=cbar_ax)
+    cbar = fig.colorbar(contourf_, cax=cbar_ax, ticks=ticks)
+    cbar.ax.set_yticklabels(ticks_round)
+
 
     # axis label
     ax.set_xlabel(axis_label_original)
@@ -64,11 +82,12 @@ def compare_2d( METRIC,
                 axis_label_modified,
                 factors,
                 nbins      = 50,
-                folder_out = "figure/2d_comparison/"
+                folder_out = "figure/2d_comparison/",
+                use_values = True
                 ) :
 
     original = df_original[METRIC]
-    modified = df_modified[METRIC] * factors[METRIC]
+    modified = df_modified[METRIC] * ( factors[METRIC] if use_values else 1 )
 
 
     # select where there are non NAN values
@@ -82,6 +101,13 @@ def compare_2d( METRIC,
     # numpy to plot
     up_limit   =  np.quantile(original, q=0.99)
     lo_limit   =  np.quantile(original, q=0.01)
+    set_log    = False
+    if not use_values :
+        up_limit   =  100.
+        lo_limit   =  0.
+        set_log    =  True
+
+    # make the histogram
     plot_range =  [[lo_limit, up_limit], [lo_limit, up_limit]]
     H2 = np.histogram2d(modified, original, bins=nbins, range=plot_range)
 
@@ -94,9 +120,7 @@ def compare_2d( METRIC,
     plt.rc('font', **font)
 
 
-    draw_and_save( METRIC, H2, axis_label_original, axis_label_modified, folder_out, set_log = False)
-    # log option still not implemented
-    #draw_and_save( METRIC, H2, axis_label_original, axis_label_modified, folder_out, set_log = True )
+    draw_and_save( METRIC, H2, axis_label_original, axis_label_modified, folder_out, set_log = set_log)
 
 
 
