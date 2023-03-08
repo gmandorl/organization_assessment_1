@@ -15,9 +15,9 @@ def Iorg(pairs_of_objects, image_size = 1):
     if pairs_of_objects.objects.number_of_objects<2 :
         return np.nan
 
-    # Weger et al. 1992 states that Iorg is not valid for total area > 10% of the image
-    if np.sum(pairs_of_objects.objects.areas) > 0.10 * image_size :
-        return np.nan
+    ## Weger et al. 1992 states that Iorg is not valid for total area > 10% of the image -> implemented in run_metrics.py
+    #if np.sum(pairs_of_objects.objects.areas) > 0.10 * image_size :
+        #return np.nan
 
 
 
@@ -164,7 +164,7 @@ def COP(pairs_of_objects):
 #######################################################################################
 
 def ABCOP(pairs_of_objects, image_size=1):
-    """The Area Based Convective Organisation Potential according to [ ??? 2022]"""
+    """The Area Based Convective Organisation Potential according to [ Jin et al. 2022]"""
     if pairs_of_objects.objects.number_of_objects<1 :
         return np.nan
     if pairs_of_objects.objects.number_of_objects==1 :
@@ -180,7 +180,7 @@ def ABCOP(pairs_of_objects, image_size=1):
     distances = np.maximum(1, pairs_of_objects.distance_centroids - 0.5 * (diameter_1 + diameter_2) )
     np.fill_diagonal(distances, np.nan)
 
-    V_area = 0.5 * (areas_1 + areas_2) / distances
+    V_area = 0.5 * (areas_1 + areas_2) / distances / image_size**0.5
     ABCOP = np.sum(np.nanmax(V_area, axis=0))
 
     return ABCOP
@@ -199,7 +199,7 @@ def SCAI(pairs_of_objects, image_size = 1):
 
 
     d_0 = np.exp( np.nansum( np.log(pairs_of_objects.distance_centroids)) / pairs_of_objects.number_of_combinations )
-    return pairs_of_objects.number_of_objects / (image_size**1.5) * d_0 * 1000
+    return pairs_of_objects.number_of_objects / (image_size**1.5) * d_0 * 1000 * 2 # *2 comes from Nmax
 
 
 
@@ -231,7 +231,7 @@ def MICA(pairs_of_objects, image_size = 1):
 
 
 #######################################################################################
-#################  Morphological Index of  Convective Aggregation  ####################
+######################  Modified Convective Aggregation Metric  #######################
 #######################################################################################
 
 def MCAI(pairs_of_objects, image_size = 1):

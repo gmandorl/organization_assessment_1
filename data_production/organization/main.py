@@ -10,13 +10,13 @@ import glob
 from run_metrics import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-c", "--config_data",default="config_TOOCAN",help="name of the input config file")
+parser.add_argument("-d", "--dataset",default="TOOCAN",help="name of the input config file")
 parser.add_argument("-p", "--property", default='P1', help="property under study")
 parser.add_argument("-m", "--month", default=1,    type=int, help="month")
 parser.add_argument("-y", "--year",  default=2013, type=int, help="year")
 args = parser.parse_args()
 
-config=importlib.import_module( args.config_data )
+config=importlib.import_module( f'config_{args.dataset}' )
 studied_property=importlib.import_module( f'property_{args.property}' )
 to_exclude=importlib.import_module( f'to_exclude_{config.label}' )
 
@@ -26,7 +26,7 @@ to_exclude=importlib.import_module( f'to_exclude_{config.label}' )
 if __name__ == '__main__':
     start_time = datetime.datetime.now()
 
-    print(f'{args.config_data} \t\t{args.year} \t{args.month}')
+    print(f'{args.dataset} \t\t{args.year} \t{args.month}')
 
 
 
@@ -81,6 +81,7 @@ if __name__ == '__main__':
                         longitude = slice(config.lon_min, config.lon_max) )
             reverse = -1 if config.cut_reversed else 1
             image = np.where( reverse*ds.variables[config.var_name].data[0] > reverse*config.cut, 1, 0 )
+            if hasattr(config, 'preprocessing') : image = config.preprocessing(image)
             image = studied_property.modify_image(image, cases[k])
             image = np.where(image>0, 1, 0)
 

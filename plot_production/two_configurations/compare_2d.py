@@ -87,7 +87,7 @@ def compare_2d( METRIC,
                 ) :
 
     original = df_original[METRIC]
-    modified = df_modified[METRIC] * ( factors[METRIC] if use_values else 1 )
+    modified = df_modified[METRIC] #* ( factors[METRIC] if use_values else 1 )
 
 
     # select where there are non NAN values

@@ -23,7 +23,7 @@ def modify_image ( *args ) :
         image_to_return = np.nanmean(image_to_return, axis=(1,3))
 
         # define what values have to be considered systems
-        image_to_return = np.where(image_to_return>=0.5, 1, 0)
+        image_to_return = np.where(image_to_return>0.5, 1, 0)
 
 
     return image_to_return
