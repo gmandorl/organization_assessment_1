@@ -13,6 +13,7 @@ day_of_year <- function(DN) {
 dataset<-'TOOCAN'
 args = commandArgs(trailingOnly=TRUE)
 print ( args[1] )
+dataset<-args[2]
 
 path_data  <- paste('../organization/output/merged/', dataset, '/', args[1], '/', sep='')
 path_cycle <- paste('output/', dataset, '/', args[1], '/', sep='')
@@ -20,10 +21,10 @@ flist <- list.files(path=path_data)
 
 if (length(flist)>15){
     len <- as.integer( length(flist) / 4 )
-    if (args[2]=='1') { flist <- flist[ seq(    1,          len ) ] }
-    if (args[2]=='2') { flist <- flist[ seq(  len,        2*len ) ] }
-    if (args[2]=='3') { flist <- flist[ seq(2*len,        3*len ) ] }
-    if (args[2]=='4') { flist <- flist[ seq(3*len, length(flist)) ] }
+    if (args[3]=='1') { flist <- flist[ seq(    1,          len ) ] }
+    if (args[3]=='2') { flist <- flist[ seq(  len,        2*len ) ] }
+    if (args[3]=='3') { flist <- flist[ seq(2*len,        3*len ) ] }
+    if (args[3]=='4') { flist <- flist[ seq(3*len, length(flist)) ] }
 }
 
 
