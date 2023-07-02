@@ -1,1 +1,1 @@
-# Study on the properties of the organization indices
+# Assessing the ability to identify deep convective organization by indices
