@@ -15,7 +15,7 @@ def Iorg(pairs_of_objects, image_size = 1):
     if pairs_of_objects.objects.number_of_objects<2 :
         return np.nan
 
-    ## Weger et al. 1992 states that Iorg is not valid for total area > 10% of the image -> implemented in run_metrics.py
+    ## Weger et al. 1992 states that Iorg is not valid for total area > 10% of the image -> not applied here
     #if np.sum(pairs_of_objects.objects.areas) > 0.10 * image_size :
         #return np.nan
 
@@ -47,6 +47,21 @@ def Iorg(pairs_of_objects, image_size = 1):
     integral = np.sum ( data_cdf[:-1] * ( weib_cdf[1:] - weib_cdf[:-1] ) )
     return integral
 
+
+
+#######################################################################################
+######################################### L_org #######################################
+#######################################################################################
+
+def Lorg(pairs_of_objects, image_size = 1):
+    """Lorg according to [Biagioli et al. 2023]"""
+
+    if pairs_of_objects.objects.number_of_objects<2 :
+        return np.nan
+
+    Lorg = 0
+
+    return Lorg
 
 
 #######################################################################################
@@ -96,7 +111,7 @@ def Iorg2(pairs_of_objects, image_size = 1):
 
 
 #######################################################################################
-###############################  Radar Organisation MEtric  ###########################
+###############################  Radar Organization MEtric  ###########################
 #######################################################################################
 
 
@@ -147,7 +162,7 @@ def NN_edge(pairs_of_objects) :
 #######################################################################################
 
 def COP(pairs_of_objects):
-    """The Convective Organisation Potential according to [White et al. 2018]"""
+    """The Convective Organization Potential according to [White et al. 2018]"""
     if pairs_of_objects.objects.number_of_objects<2 :
         return np.nan
 
@@ -160,11 +175,11 @@ def COP(pairs_of_objects):
 
 
 #######################################################################################
-#################### Area Based Convective Organisation Potential #####################
+#################### Area Based Convective Organization Potential #####################
 #######################################################################################
 
 def ABCOP(pairs_of_objects, image_size=1):
-    """The Area Based Convective Organisation Potential according to [ Jin et al. 2022]"""
+    """The Area Based Convective Organization Potential according to [ Jin et al. 2022]"""
     if pairs_of_objects.objects.number_of_objects<1 :
         return np.nan
     if pairs_of_objects.objects.number_of_objects==1 :
@@ -174,7 +189,7 @@ def ABCOP(pairs_of_objects, image_size=1):
     areas_1 = pairs_of_objects.objects.areas
     areas_2 = pairs_of_objects.objects.areas[:,None]
 
-    #distances = copy.deepcopy(pairs_of_objects.distance_edges)   # distances using edges with skimage
+
     diameter_1 = pairs_of_objects.objects.diameters
     diameter_2 = pairs_of_objects.objects.diameters[:,None] #transpose the vector
     distances = np.maximum(1, pairs_of_objects.distance_centroids - 0.5 * (diameter_1 + diameter_2) )
@@ -195,16 +210,41 @@ def ABCOP(pairs_of_objects, image_size=1):
 def SCAI(pairs_of_objects, image_size = 1):
     """SCAI according to [Tobin et al. 2013]"""
     if pairs_of_objects.objects.number_of_objects<2 :
-        return np.nan
+        return np.nan#, np.nan
 
 
-    d_0 = np.exp( np.nansum( np.log(pairs_of_objects.distance_centroids)) / pairs_of_objects.number_of_combinations )
-    return pairs_of_objects.number_of_objects / (image_size**1.5) * d_0 * 1000 * 2 # *2 comes from Nmax
+    d_0  = np.exp( 0.5 * np.nansum( np.log(pairs_of_objects.distance_centroids)) / pairs_of_objects.number_of_combinations )
+    SCAI = pairs_of_objects.number_of_objects / (image_size**1.5) * d_0 * 1000 * 2 # *2 comes from Nmax
+
+    return SCAI#, d_0
 
 
 
 #######################################################################################
-#################  Morphological Index of  Convective Aggregation  ####################
+######################  Modified Convective Aggregation Metric  #######################
+#######################################################################################
+
+def MCAI(pairs_of_objects, image_size = 1):
+    """MCAI according to [Xu et al. 2018]"""
+    if pairs_of_objects.objects.number_of_objects<2 :
+        return np.nan#, np.nan
+
+    diameter_1 = pairs_of_objects.objects.diameters
+    diameter_2 = pairs_of_objects.objects.diameters[:,None] #transpose the vector
+    #v = np.array(0.5 * (diameter_1 + diameter_2) / pairs_of_objects.distance_centroids)
+
+    d2 = np.maximum(0, pairs_of_objects.distance_centroids - 0.5 * (diameter_1 + diameter_2) )
+    d2 = np.nanmean(d2)
+    L = math.sqrt(image_size)
+
+
+    MCAI = pairs_of_objects.objects.number_of_objects * d2 * 1000 * 2 / L**3
+    return MCAI#, d2
+
+
+
+#######################################################################################
+##################  Morphological Index of Convective Aggregation  ####################
 #######################################################################################
 
 def MICA(pairs_of_objects, image_size = 1):
@@ -231,37 +271,54 @@ def MICA(pairs_of_objects, image_size = 1):
 
 
 #######################################################################################
-######################  Modified Convective Aggregation Metric  #######################
+######################################## I_shape ######################################
 #######################################################################################
 
-def MCAI(pairs_of_objects, image_size = 1):
-    """MCAI according to [Xu et al. 2018]"""
+def Ishape(pairs_of_objects, image_size = 1):
+    """Ishape according to [Pscheidt et al. 2019]"""
+
     if pairs_of_objects.objects.number_of_objects<2 :
         return np.nan
 
-    objects = pairs_of_objects.objects
-    diameter_1 = pairs_of_objects.objects.diameters
-    diameter_2 = pairs_of_objects.objects.diameters[:,None] #transpose the vector
-    v = np.array(0.5 * (diameter_1 + diameter_2) / pairs_of_objects.distance_centroids)
+    areas       = pairs_of_objects.objects.areas
+    perimeters  = pairs_of_objects.objects.perimeters
 
-    d2 = np.maximum(0, pairs_of_objects.distance_centroids - 0.5 * (diameter_1 + diameter_2) )
-    d2 = np.nansum(d2) * 0.5 # 0.5 is needed to avoid double counting
-    L = math.sqrt(image_size)
-
-    # correction of characteristic length
-    max_edges_x = objects.centroids[:,0] + 0.5*objects.diameters
-    min_edges_x = objects.centroids[:,0] - 0.5*objects.diameters
-    max_edges_y = objects.centroids[:,1] + 0.5*objects.diameters
-    min_edges_y = objects.centroids[:,1] - 0.5*objects.diameters
-
-    L_x = np.max(max_edges_x) - np.min(min_edges_x)
-    L_y = np.max(max_edges_y) - np.min(min_edges_y)
-    L = np.max([L, L_x, L_y])
-    #print('MCAI', L, pairs_of_objects.objects.number_of_objects)
+    Ishape =  np.sum (areas**0.5 / perimeters) /  pairs_of_objects.objects.number_of_objects
 
 
-    MCAI = objects.number_of_objects * d2 * 1000 * 2 / L**3
-    return MCAI
+    return Ishape
 
+
+#######################################################################################
+######################################### EXTRA #######################################
+#######################################################################################
+
+
+def OIDRA (pairs_of_objects, image_size = 1):
+    """Example of organization index that satisfy all properties but P5"""
+    if pairs_of_objects.objects.number_of_objects<2 :
+        return np.nan
+
+    objects   = pairs_of_objects.objects
+    areas     = pairs_of_objects.objects.areas
+    distances = pairs_of_objects.distance_edges
+
+
+    L       = math.sqrt(image_size)
+    weights = 1 - np.sqrt( 1.4142135623730951 * distances / L )
+    #weights = 2*np.exp( - 1.4142135623730951 * distances / L ) - 1
+    areas   = areas / np.sum(areas)
+
+
+    # compute A_i * A*j * weight_ij
+    coefficients = weights
+    coefficients = coefficients * areas
+    coefficients = (coefficients.T*areas.T).T
+
+
+    new_index  = np.nansum(coefficients) + np.sum(areas*areas)
+
+
+    return  new_index
 
 

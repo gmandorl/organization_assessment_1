@@ -8,7 +8,7 @@ import argparse
 import os
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-d", "--dataset", default='TOOCAN', help="folder where to merge the files")
+parser.add_argument("-d", "--dataset", default='TOOCAN_10_120', help="folder where to merge the files")
 args = parser.parse_args()
 
 
@@ -27,7 +27,11 @@ if __name__ == '__main__':
     start_time = datetime.datetime.now()
 
 
-    for n, time_shift in enumerate([30,60,90]) :
+    #for n, time_shift in enumerate([30,60,90]) :
+    for time_shift in list(np.arange(1,30, dtype=int)*30) + list(np.arange(1,4, dtype=int)*60*24) :
+        time_shift = int(time_shift)
+        n = int( time_shift / 30. )
+        print(n, time_shift)
 
         path = f'../organization/output/merged/{args.dataset}/'
 
@@ -39,9 +43,17 @@ if __name__ == '__main__':
                                                             x['hour'],
                                                             x['minute']), axis=1)
 
+        # create df2: the shift df1 of time_shift
         df1  = df
         df2  = df.iloc[n+1:  , :]
-        df2  = pd.concat( ( df2, pd.DataFrame(columns=df1.columns, index=list(range(n+1)) ) ) )
+
+        df2_end = pd.DataFrame(columns=df1.columns, index=list(range(n+1)) )
+        df2_end['year']   = 3000
+        df2_end['month']  = 1
+        df2_end['day']    = 1
+        df2_end['hour']   = 0
+        df2_end['minute'] = 0
+        df2  = pd.concat( (df2, df2_end) )
 
 
         # shift the two dataframe ( "to_numpy" is crucial to perform the shift! )
@@ -53,7 +65,8 @@ if __name__ == '__main__':
         # perform the selection
         #df1 = df1.query('to_select==True')
         #df2 = df2.query('to_select==True')
-        df2[df2['to_select']==False] = np.nan
+        columns_to_nan = [x for x in df2.columns if x not in ['year', 'month', 'day', 'hour', 'minute']]
+        df2[columns_to_nan][df2['to_select']==False] = np.nan
 
 
         # remove new used columns

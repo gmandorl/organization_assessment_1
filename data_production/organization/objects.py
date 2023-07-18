@@ -62,6 +62,7 @@ class make_objects :
         self.areas     = np.array([r.area     for r in self.regions])  # I will use these in the metrics
         self.centroids = np.array([r.centroid for r in self.regions])
         self.diameters = np.array([r.equivalent_diameter     for r in self.regions])
+        self.perimeters= np.array([p.length for p in self.polynoms]) # +0.5 is needed because of the shape of spg.Polygon
 
         self.number_of_objects = len(self.polynoms)
 
@@ -114,6 +115,7 @@ class make_pairs:
                 distance_edges[m,n] = self.objects.polynoms[n].distance(self.objects.polynoms[m])
                 distance_edges[n,m] = distance_edges[m,n]
                 #if distance_edges[n,m]==0 : print('WARNING: distance between edges is zero')
+        np.fill_diagonal(distance_edges, np.nan)
         self.distance_edges =  distance_edges
 
 

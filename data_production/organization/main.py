@@ -11,7 +11,7 @@ from run_metrics import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dataset",default="TOOCAN",help="name of the input config file")
-parser.add_argument("-p", "--property", default='P1', help="property under study")
+parser.add_argument("-p", "--property", default='P9', help="property under study")
 parser.add_argument("-m", "--month", default=1,    type=int, help="month")
 parser.add_argument("-y", "--year",  default=2013, type=int, help="year")
 args = parser.parse_args()
