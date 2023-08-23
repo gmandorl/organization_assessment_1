@@ -21,6 +21,7 @@ class make_objects :
         regions  = skm.regionprops(labeled)
 
 
+        perimeter_ = []
         polynoms = []
         for r in regions:
             bounds = r.bbox
@@ -37,6 +38,14 @@ class make_objects :
 
             m_poly = spg.Polygon(contour[0])
             polynoms.append(m_poly)
+
+            # compute the perimeter
+            negative_bed = np.where(bed==0, 1, 0)
+            perimeter_.append( np.sum(bed[:-1,:]*negative_bed[1: ,:]) +
+                               np.sum(bed[ 1:,:]*negative_bed[:-1,:]) +
+                               np.sum(bed[:,:-1]*negative_bed[:,1: ]) +
+                               np.sum(bed[:,1: ]*negative_bed[:,:-1])
+                               )
 
 
 
@@ -62,7 +71,8 @@ class make_objects :
         self.areas     = np.array([r.area     for r in self.regions])  # I will use these in the metrics
         self.centroids = np.array([r.centroid for r in self.regions])
         self.diameters = np.array([r.equivalent_diameter     for r in self.regions])
-        self.perimeters= np.array([p.length for p in self.polynoms]) # +0.5 is needed because of the shape of spg.Polygon
+        #self.perimeters= np.array([p.length for p in self.polynoms]) # +0.5 is needed because of the shape of spg.Polygon
+        self.perimeter = np.array(perimeter_)
 
         self.number_of_objects = len(self.polynoms)
 
@@ -102,7 +112,12 @@ class make_pairs:
         dist_y = ys - ys[:,None]
         distances =  np.sqrt(dist_x**2 + dist_y**2)
         np.fill_diagonal(distances, np.nan)  # it is inplace
-        self.distance_centroids = distances
+
+        self.centroids_x          = xs
+        self.centroids_y          = ys
+        self.distance_centroids_x = dist_x
+        self.distance_centroids_y = dist_y
+        self.distance_centroids   = distances
 
         # compute the nearest neighbour distance
         self.dist_min = np.nanmin(distances, axis=0) if self.number_of_objects > 1 else np.nan

@@ -23,7 +23,7 @@ def scale_with_dimension(df, label) :
     if label in factors.keys() :
         scale_factor = factors[label]
         for METRIC in df.columns :
-            if   METRIC in ['ROME', 'new_index2'] or 'area' in METRIC :          df[METRIC] = df[METRIC] * scale_factor**2
+            if   METRIC in ['ROME', 'ROME_delta'] or 'area' in METRIC :          df[METRIC] = df[METRIC] * scale_factor**2
             elif METRIC in ['NN_center', 'NN_edge'] :              df[METRIC] = df[METRIC] * scale_factor
             elif METRIC in ['MCAI', 'SCAI'] :                      df[METRIC] = df[METRIC] / scale_factor**2
             elif METRIC in ['D0', 'D2'] :                          df[METRIC] = df[METRIC] * scale_factor

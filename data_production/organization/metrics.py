@@ -3,7 +3,10 @@ import math
 import scipy as sp
 from scipy import special
 import copy
-
+import Biagioli_code as Biagioli_code
+import datetime
+import matplotlib.pyplot as plt
+from skimage.measure import shannon_entropy
 
 #######################################################################################
 ######################################### I_org #######################################
@@ -53,15 +56,164 @@ def Iorg(pairs_of_objects, image_size = 1):
 ######################################### L_org #######################################
 #######################################################################################
 
-def Lorg(pairs_of_objects, image_size = 1):
-    """Lorg according to [Biagioli et al. 2023]"""
+def Lorg(pairs_of_objects, l_max = 2, domain_length=1):
+    """Lorg according to [Biagioli et al. 2023]
+    A more general implementation at https://github.com/giobiagioli/organization_indices"""
 
-    if pairs_of_objects.objects.number_of_objects<2 :
+
+    number_of_objects = pairs_of_objects.objects.number_of_objects
+    if number_of_objects<2 :
         return np.nan
 
-    Lorg = 0
+    #l_max = domain_length
+    centroids_x          = pairs_of_objects.centroids_x
+    centroids_y          = pairs_of_objects.centroids_y
+    distance_centroids_x = np.abs(pairs_of_objects.distance_centroids_x)
+    distance_centroids_y = np.abs(pairs_of_objects.distance_centroids_y)
+    distance_centroids   = pairs_of_objects.distance_centroids
 
+    size = 2*np.maximum(distance_centroids_x, distance_centroids_y)
+
+    values = np.unique(size, return_counts=False)
+    #counts = counts[values>0]
+    #values = values[values>0]
+
+    # 0 has to be there
+    bins = values #np.append(   values, 1.414213562*domain_length)
+    bins = np.linspace(0,l_max,100)  # 100 bins give results very close to Biagioli's code
+    Nbins = bins.shape[0]
+
+
+    size_tile  = np.tile(size, (Nbins,1,1))
+    values_tile = np.rollaxis(np.tile(bins, (number_of_objects,number_of_objects,1)), 2)
+
+    hist = np.where(size_tile<=values_tile,1,0)
+    cum_hist = np.sum(hist, axis=2) - 1 # -1 to remove the auto-distance
+    #print('---- -- SHAPE -- ----', cum_hist.shape, hist.shape, size_tile.shape, values_tile.shape)
+    #print('cum_hist', cum_hist)
+    #plt.plot(bins/ domain_length/2, cum_hist[:,2] , label = 'Giulio')
+
+
+    #hist = counts
+    #print(values, counts)
+    #print('CHECK --  ', values.shape, size.shape, bins.shape)#, counts.shape
+
+
+    #print('SIZE', distance_centroids_x.shape, centroids_x.shape, size.shape)
+    #bins = np.linspace(0,1.414213562*domain_length,Nbins+1)
+
+    weights = np.ones(Nbins)
+    centroids_x_tile = np.tile(centroids_x, (Nbins,1))
+    centroids_y_tile = np.tile(centroids_y, (Nbins,1))
+
+    #print('SHAPE SHAPE ', centroids_x_tile.shape)
+
+
+    xmax = np.minimum(centroids_x_tile + bins[:,None]/2., domain_length)
+    xmin = np.maximum(centroids_x_tile - bins[:,None]/2., 0)
+    ymax = np.minimum(centroids_y_tile + bins[:,None]/2., domain_length)
+    ymin = np.maximum(centroids_y_tile - bins[:,None]/2., 0)
+
+    weights = (ymax-ymin)*(xmax-xmin) / bins[:,None] / bins[:,None]
+    weights = 1./weights
+    weights = np.where(weights>1, weights, 1)
+
+    #print('bins GIULIO ', bins*bins)
+    #print('WEIGHT GIULIO ', weights)
+
+
+
+    cum_hist = weights*cum_hist
+
+    Besag_obs = domain_length * np.sqrt(np.mean(cum_hist, axis=1) / (number_of_objects-1) )/ l_max
+
+
+
+
+    #Lorg = np.trapz(Besag_obs-Besag_theor, x = bins/l_max)
+    #Lorg = np.trapz(Besag_obs, x = bins/l_max) - 1/2
+    Lorg =  np.sum ( Besag_obs[:-1] * ( bins[1:] - bins[:-1] ) / l_max  ) - 0.5
+    Lorg = Lorg * ((number_of_objects-1)/number_of_objects)**0.5   # correction due to the low number of objects
+
+    #print(Lorg)
+    #plt.plot(bins/ l_max, Besag_obs  , label = 'Giulio')
+
+
+    #plt.plot(bins/ l_max, np.mean(cum_hist, axis=1) , label = 'Giulio')
+    #plt.plot(bins/ l_max, cum_hist[:,2] , label = 'Giulio')
+    #plt.plot(bins/ l_max, np.mean(cum_hist, axis=1) , label = 'Giulio')
+    #plt.legend()
+    #plt.show()
     return Lorg
+
+
+
+
+
+def Lorg_Giovanni(pairs_of_objects, image):
+    """Lorg according to [Biagioli et al. 2023]"""
+
+    start_time = datetime.datetime.now()
+    if pairs_of_objects.objects.number_of_objects<2 :
+        return 0, np.nan
+
+
+
+    bins = np.linspace(0,image.shape[0]*2,100)
+    rmax=image.shape[0]*2
+    #print('rmax Giovanni', rmax)
+    ncnv, lambd, NNdist, Besag_obs, Besag_theor = Biagioli_code.calculate_Lfunctions(image, rmax=rmax, bins=bins)
+
+    #Lorg = np.trapz(Besag_obs-Besag_theor, x = bins/rmax)
+    Lorg = np.sum ( Besag_obs[:-1] * ( bins[1:] - bins[:-1] )/rmax )  - 0.5
+
+
+    #plt.plot(bins/ rmax, Besag_obs , label='Giovanni')
+    #plt.plot(bins/ rmax, Besag_theor )
+    return ncnv, Lorg
+
+
+
+#######################################################################################
+#################################### I_org Giovanni ###################################
+#######################################################################################
+
+def Iorg_Giovanni(pairs_of_objects, image):
+    """Iorg according to [Biagioli et al. 2023]"""
+
+
+    if pairs_of_objects.objects.number_of_objects<2 :
+        return 0, np.nan
+
+    Iorg = 0
+
+    print('\npairs_of_objects.objects.number_of_objects ',  pairs_of_objects.objects.number_of_objects)
+
+
+    bins = np.linspace(0,image.shape[0]*2,1000)
+    ncnv, lambd, NNdist, Besag_obs, Besag_theor = Biagioli_code.calculate_Lfunctions(image, rmax=image.shape[0]*2, bins=bins)
+
+    NNCDF_ran_Weibull = 1-np.exp(-lambd*np.pi*bins**2)
+    values,counts = np.unique(np.digitize(NNdist, bins=bins, right=True), return_counts=True)
+    hist = np.zeros(len(bins), dtype = int)
+    hist[values] = counts
+    NNPDF = hist/np.sum(hist)
+    NNCDF_sim = np.cumsum(NNPDF)
+
+    #import matplotlib.pyplot as plt
+    #plt.plot(NNCDF_sim, label='NNCDF_sim')
+    #plt.plot(NNCDF_ran_Weibull, label='NNCDF_ran_Weibull')
+    #plt.plot(NNCDF_sim, NNCDF_ran_Weibull)
+    #plt.legend()
+    #plt.show()
+
+    #Iorg = np.sum ( NNCDF_sim[:-1] * ( NNCDF_ran_Weibull[1:] - NNCDF_ran_Weibull[:-1] ) )
+
+    Iorg  = np.trapz(NNCDF_sim, x = NNCDF_ran_Weibull)
+    RI_org = np.trapz(NNCDF_sim-NNCDF_ran_Weibull, x = NNCDF_ran_Weibull)
+
+    print('datetime  ', datetime.datetime.now())
+    return ncnv, Iorg
 
 
 #######################################################################################
@@ -134,6 +286,63 @@ def ROME(pairs_of_objects):
 
 
     return np.nanmean(large_area + np.fmin(small_area, (small_area / pairs_of_objects.distance_edges)**2))
+
+
+
+#######################################################################################
+#################################  Information Entropy H  #############################
+#######################################################################################
+
+
+def H(image, pairs_of_objects):
+    """Information Entropy according to [Sullivan et al. 2019]"""
+
+    if   pairs_of_objects.objects.number_of_objects<2  :  return np.nan
+
+    domain_length = max(image.shape[0], image.shape[1])
+    return shannon_entropy(image) / domain_length
+
+    #domain_length = max(image.shape[0], image.shape[1])
+
+    #number_of_conv_pixels    = np.nansum(image)
+    #entropy = 0
+
+    #for n in range(domain_length) :
+        #pi = np.sum(image[:n,:n]) / number_of_conv_pixels
+        #log_pi = np.where(pi==0, 0, np.log(pi))
+        #entropy = entropy + log_pi * pi
+
+    #return entropy / domain_length
+
+
+
+def H2(pairs_of_objects, domain_shape=120):
+    """Information Entropy according to [Sullivan et al. 2019]"""
+
+    if   pairs_of_objects.objects.number_of_objects<2  :  return np.nan
+
+
+    number_of_objects    = pairs_of_objects.objects.number_of_objects
+    centroids_x          = pairs_of_objects.centroids_x
+    centroids_y          = pairs_of_objects.centroids_y
+    size = np.maximum(centroids_x, centroids_y)
+
+    domain_maximum_length = max(domain_shape[0], domain_shape[1])
+    i  = np.arange(domain_maximum_length)
+
+
+    size_tile  = np.tile(size, (i.shape[0],1))
+    bins_tile = np.rollaxis(np.tile(i, (number_of_objects,1)), 1)
+
+    hist = np.where(size_tile<=bins_tile,1,0)
+    pi   = np.sum(hist, axis=1) / number_of_objects
+
+    #print(pi)
+    log_pi = np.where(pi==0, 0, np.log(pi))
+    entropy = + np.sum(log_pi * pi)   # the sign is opposite wrt the original definition similarly to SCAI
+
+
+    return entropy
 
 
 
@@ -281,7 +490,11 @@ def Ishape(pairs_of_objects, image_size = 1):
         return np.nan
 
     areas       = pairs_of_objects.objects.areas
-    perimeters  = pairs_of_objects.objects.perimeters
+    perimeters  = pairs_of_objects.objects.perimeter
+
+    #idx = np.where(areas==1)
+    #print('\nTEST PERIMETER \n', pairs_of_objects.objects.perimeter[idx[:5]], '\n', pairs_of_objects.objects.perimeter_crofton[idx[:5]], '\n', perimeters[idx[:5]])
+
 
     Ishape =  np.sum (areas**0.5 / perimeters) /  pairs_of_objects.objects.number_of_objects
 
