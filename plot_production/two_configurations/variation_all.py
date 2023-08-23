@@ -8,7 +8,9 @@ import configparser
 
 conf_ = configparser.ConfigParser()
 conf_.read('../colors.ini')
-colors = conf_['COLORS']
+colors     = conf_['COLORS']
+styles     = conf_['STYLE']
+label_leg  = conf_['LEGEND']
 
 
 #import tomllib
@@ -29,11 +31,11 @@ def draw_and_save (METRICS,
 
     fig, ax   = plt.subplots( figsize=(8,6) )
 
-    nbins = 100
-    if not use_values :
-        x_max = 101
-        y_max = y_max / 100
-        y_min = y_min / 100
+    nbins = 47 #100
+    #if not use_values :
+        #x_max = 60 if extra_name else 101
+        #y_max = y_max / 100
+        #y_min = y_min / 100
 
     x_min = 0 if draw_abs else -x_max
     bsize = (x_max-x_min)/nbins
@@ -52,13 +54,15 @@ def draw_and_save (METRICS,
         #print('density ', METRIC, np.sum(density_to_plot)*bsize) # should be 1
 
         # color and plot
-        color = colors[METRIC] if METRIC in colors else 'k'
-        plt.plot(xbins, density_to_plot, color=color)#, label=METRIC)
-        plt.fill_between(xbins, y_min, density_to_plot, interpolate=True, alpha=0.25, label=METRIC, color=color)
+        color        = colors[METRIC] if METRIC in colors else 'k'
+        style        = styles[METRIC] if METRIC in styles else '-'
+        METRIC_label = label_leg[METRIC] if METRIC in label_leg else METRIC
+        plt.plot(xbins, density_to_plot, color=color, lw=3, label=METRIC_label, linestyle=style)
+        #plt.fill_between(xbins, y_min, density_to_plot, interpolate=True, alpha=0.25, label=METRIC_label, color=color)
 
     # set axis
     ax.spines[['right', 'top', 'left']].set_visible(False)
-    ax.set_xlabel('percentile difference in absolute value' if draw_abs else 'percentile difference')
+    ax.set_xlabel('| $ \Delta $ p |' if draw_abs else '$ \Delta $ p')
     if use_values : ax.set_xlabel('|Z|' if draw_abs else 'Z')
     ax.set_ylabel('density')
     plt.yscale('log')
@@ -69,14 +73,28 @@ def draw_and_save (METRICS,
     # vertical line at 0
     if not draw_abs : plt.axvline(0, color='k', linewidth=1, linestyle='--')
 
+    # Write the number according to the article ordering
+    pert_text = '(X)'
+    if 'P9' in folder_out : pert_text = '(1)'
+    if 'P3' in folder_out : pert_text = '(2)'
+    if 'P2' in folder_out : pert_text = '(3)'
+    if 'P5' in folder_out : pert_text = '(4)'
+    if 'F1' in folder_out : pert_text = '(5)'
+    if 'F2' in folder_out : pert_text = '(6)'
+    if 'F4' in folder_out : pert_text = '(7)'
+    plt.text(0.04, 0.93, 'Perturbation '+pert_text, weight='bold', transform = ax.transAxes)
+
     # legend
-    leg = plt.legend(title='Indices', loc = 'upper right', fontsize=13)
+    #leg = plt.legend(title='Indices', loc = 'upper right', fontsize=13)
+    #leg = plt.legend(loc = 'upper right', fontsize=13, ncol=2)
+    leg = plt.legend(loc = (0.55, 0.65), fontsize=15, ncol=2)
     plt.setp(leg.get_title(),fontweight='bold')
     leg.get_frame().set_linewidth(0.0)
     leg.get_frame().set_color('white')
-    #leg.get_frame().set_alpha(1.)
+    #leg.get_frame().set_alpha(0.)
 
-    plt.savefig(f'{folder_out}/density_Z{extra_name}.png')
+    plt.savefig(f'{folder_out}/density_Z{extra_name}.png', dpi=300)
+    plt.savefig(f'{folder_out}/density_Z{extra_name}.pdf', dpi=300)
 
     fig.clf()
 
@@ -87,7 +105,7 @@ def draw_and_save (METRICS,
 def variation_all( METRICS,
                    df_original,
                    df_modified,
-                   factors,
+                   selected_number = 0,
                    folder_out = 'figure',
                    use_values = True,
                    extra_text = ''
@@ -106,25 +124,56 @@ def variation_all( METRICS,
     std = df_original.std(skipna=True)
 
     # create the output folder
-    if not os.path.isdir(folder_out) : os.makedirs(folder_out)
-    f_txt = open(f'{folder_out}/Z_mean.txt', 'w')
+    #if not os.path.isdir(folder_out) : os.makedirs(folder_out)
+    if not os.path.isdir(f'{folder_out}/output')   : os.makedirs(f'{folder_out}/output')
+
+    # create the output files to store Delta p
+    f_txt           = open(f'{folder_out}/Z_mean.txt', 'w')
+    variation_dict  = dict()
 
 
-    for METRIC in columns :
+    for METRIC in METRICS :
         std_touse    =  std[METRIC]     if use_values else 1.
-        factor_touse =  factors[METRIC] if use_values else 1.
-        df_difference[METRIC] = (df_modified[METRIC]*factor_touse - df_original[METRIC]) / std_touse
-        Z_metric = df_difference[METRIC].to_numpy()
-        f_txt.write(f'{METRIC}    \t  {np.nanmean(np.abs(Z_metric))}    \t  {np.count_nonzero(np.isnan(Z_metric))}\n')
-        #print(METRIC, '    \t ', len(df_difference.query(f'{METRIC}<0.1')) / len(df_difference))
+
+        Z_metric = (df_modified[METRIC].to_numpy() - df_original[METRIC].to_numpy()) / std_touse
+        df_difference[METRIC] = Z_metric
+
+        # select where there are non NAN values
+        non_NAN = np.logical_and( np.isfinite(df_modified[METRIC]),
+                                  np.isfinite(df_original[METRIC]))
+        original_values = df_modified[METRIC].to_numpy()[non_NAN]
+        modified_values = df_original[METRIC].to_numpy()[non_NAN]
+
+
+        # write txt file
+        abs_delta_Z = round(np.nanmean(np.abs(Z_metric)),                           3)
+        corr_coef   = round(np.corrcoef(original_values, modified_values)[0,1],     3)
+        neg_freq    = round(np.nansum(Z_metric<0)/np.sum(np.isfinite(Z_metric)),    3)
+        nan_count   = round(np.count_nonzero(np.isnan(Z_metric)),                   3)
+        f_txt.write(f'{METRIC}{" " * (20 - len(METRIC))}\t  {abs_delta_Z}   \t  {corr_coef}   \t  {neg_freq}    \t  {nan_count}\n')
+
+        # Write the csv file
+        variation_dict[METRIC] = [ METRIC,
+                                   np.nanmean(np.abs(Z_metric)),
+                                   np.corrcoef(original_values, modified_values)[0,1],
+                                   np.nansum(Z_metric<0)/np.sum(np.isfinite(Z_metric)),
+                                   selected_number
+                                  ]
+
+
+    # Write the dictionary in a csv file
+    df = pd.DataFrame.from_dict(variation_dict, orient='index',
+                      columns=['METRIC', 'Delta_p', 'correlation',
+                               'fraction_of_events_with_decreasing_organization', 'number_of_objects'])
+    df.to_csv(f'{folder_out}/output/info_n{selected_number}.csv', index=False)
 
 
     df_difference = df_difference[METRICS]
     draw_and_save (METRICS,
                    df_difference,
-                   y_min = 0.001,
-                   y_max = 50,
-                   x_max = 5,
+                   y_min = 0.001 if use_values else 0.00001,
+                   y_max = 50    if use_values else 0.99,
+                   x_max = 5     if use_values else 60,
                    folder_out = folder_out,
                    extra_text = extra_text,
                    extra_name = '',
@@ -134,9 +183,9 @@ def variation_all( METRICS,
 
     draw_and_save (METRICS,
                    df_difference,
-                   y_min = 0.05,
-                   y_max = 50,
-                   x_max = 1.3,
+                   y_min = 0.05  if use_values else 0.0005,
+                   y_max = 50    if use_values else 0.99,
+                   x_max = 1.3   if use_values else 60,
                    folder_out = folder_out,
                    extra_text = extra_text,
                    extra_name = '_zoom',
@@ -144,11 +193,26 @@ def variation_all( METRICS,
                    draw_abs = False
                    )
 
+
     draw_and_save (METRICS,
                    df_difference,
-                   y_min = 0.011,
-                   y_max = 99,
-                   x_max = 2,
+                   y_min = 0.05  if use_values else 0.0005,
+                   y_max = 50    if use_values else 0.999,
+                   x_max = 0.8   if use_values else 49,
+                   folder_out = folder_out,
+                   extra_text = extra_text,
+                   extra_name = '_zoom_zoom',
+                   use_values = use_values,
+                   draw_abs = False
+                   )
+
+
+
+    draw_and_save (METRICS,
+                   df_difference,
+                   y_min = 0.011  if use_values else 0.00011,
+                   y_max = 99     if use_values else 0.99,
+                   x_max = 2      if use_values else 60,
                    folder_out = folder_out,
                    extra_text = extra_text,
                    extra_name = '_abs',

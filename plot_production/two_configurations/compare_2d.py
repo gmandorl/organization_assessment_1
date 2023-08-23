@@ -41,7 +41,7 @@ def draw_and_save ( METRIC,
         levels  = np.linspace ( -4, 0, 9)
         ticks   = np.array([levels[0], levels[2], levels[4], levels[6], levels[8]])
         ticks_round = np.around((10**ticks), 4)
-        #ticks_round = (10**ticks).astype(int)
+        if 'percentile' in folder_out : ticks_round = ['10$^{-6}$', '10$^{-5}$', '10$^{-4}$', '10$^{-3}$', '10$^{-2}$']
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
             h2_to_plot  = np.log10(h2_to_plot)
@@ -68,7 +68,10 @@ def draw_and_save ( METRIC,
     ax.set_ylabel(axis_label_modified)
     plt.text(1.04, 0.97, 'Density', weight='bold', transform = ax.transAxes)
 
+    # save the plot
     plt.savefig(f'{folder_out}/{METRIC}.png')
+    plt.savefig(f'{folder_out}/{METRIC}.pdf')
+    plt.close()
 
 
 
@@ -80,14 +83,13 @@ def compare_2d( METRIC,
                 df_modified,
                 axis_label_original,
                 axis_label_modified,
-                factors,
                 nbins      = 50,
                 folder_out = "figure/2d_comparison/",
                 use_values = True
                 ) :
 
     original = df_original[METRIC]
-    modified = df_modified[METRIC] #* ( factors[METRIC] if use_values else 1 )
+    modified = df_modified[METRIC]
 
 
     # select where there are non NAN values
@@ -113,7 +115,7 @@ def compare_2d( METRIC,
 
 
 
-    if not os.path.isdir(folder_out) : os.makedirs(folder_out)
+    #if not os.path.isdir(folder_out) : os.makedirs(folder_out)
 
     # plt font
     font = {'family' : 'serif','size': 18}
