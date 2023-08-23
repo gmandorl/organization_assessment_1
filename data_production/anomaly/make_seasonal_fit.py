@@ -52,6 +52,7 @@ def fitting_function (xy, A00, A01, A02, A03, A04,
 
 def compute_day_of_year (year, month, day) :
     """Return the number of day from 1 to 366"""
+    if math.isnan(year) : return np.nan
     return datetime.date(int(year), int(month), int(day)).timetuple().tm_yday
 
 
