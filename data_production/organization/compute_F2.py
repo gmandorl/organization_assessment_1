@@ -27,8 +27,7 @@ if __name__ == '__main__':
     start_time = datetime.datetime.now()
 
 
-    #for n, time_shift in enumerate([30]) :
-    ##for n, time_shift in enumerate([30,60,90]) :
+
     for time_shift in list(np.arange(1,30, dtype=int)*30) + list(np.arange(1,4, dtype=int)*60*24) + [131400] :
         time_shift = int(time_shift)
         n = int( time_shift / 30. )
@@ -56,7 +55,6 @@ if __name__ == '__main__':
         df2_end['minute'] = 0
         df2  = pd.concat( (df2, df2_end) )
 
-        #print(df1, '\n\n', df2)
 
         # shift the two dataframe ( "to_numpy" is crucial to perform the shift! )
         df1['date_shifted'] = df2['date'].to_numpy() - datetime.timedelta(minutes=time_shift)
@@ -65,8 +63,6 @@ if __name__ == '__main__':
 
 
         # perform the selection
-        #df1 = df1.query('to_select==True')
-        #df2 = df2.query('to_select==True')
         columns_to_nan = [x for x in df2.columns if x not in ['year', 'month', 'day', 'hour', 'minute']]
         df2[columns_to_nan][df2['to_select']==False] = np.nan
 
@@ -78,7 +74,6 @@ if __name__ == '__main__':
         del df1['date']
         del df2['date']
 
-        #print(df1, '\n\n', df2)
 
         # save the new data
         folder_out = f'{path}/F2/'
