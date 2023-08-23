@@ -9,7 +9,7 @@ import math
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--month", default='01', help="month")
-parser.add_argument("-y", "--year",  default=2013, type=int, help="year")
+parser.add_argument("-y", "--year",  default=2017, type=int, help="year")
 args = parser.parse_args()
 
 path_out = '/scratchx/gmandorli/random_dataset'
@@ -52,14 +52,14 @@ if __name__ == '__main__':
 
 
             # Generate objects number and dimension
-            Nobjects = int(random.expovariate(math.log(10)/30.))
+            Nobjects = int(random.expovariate(math.log(10)/30.) + random.expovariate(math.log(10)/10.) * (random.random() < 0.5))
 
             for object_iterator in range(Nobjects) :
 
                 #radius=random.uniform(80**(-1), 1**(-1))**(-1)
                 #area=random.expovariate(math.log(10)/150.)
-                area=random.expovariate(math.log(10)/1000.)
-                if random.random() < 0.8 : area=random.expovariate(math.log(10)/10.)
+                area=random.expovariate(math.log(10)/800.)
+                if random.random() < 0.9 : area=random.expovariate(math.log(10)/10.)
 
                 index_selection = create_circular_selection(xs, ys,
                                                             center=[random.randint(0, 120), random.randint(0, 120)],
