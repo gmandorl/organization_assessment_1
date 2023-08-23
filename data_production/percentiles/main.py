@@ -8,7 +8,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dataset", default="TOOCAN",  help="name of the dataset")
 parser.add_argument("-p", "--property",default="P1",      help="property under study")
-parser.add_argument("-s", "--split",   default=0,         help="split the input fils in two groups")
+parser.add_argument("-s", "--split",   default=0,         help="split the input files in three groups")
 parser.add_argument('--use_anomaly',                      action='store_true')
 parser.add_argument('--use_original', dest='use_anomaly', action='store_false')
 parser.set_defaults(use_anomaly=True)
@@ -16,6 +16,9 @@ args = parser.parse_args()
 
 
 var_to_exclude = ['year', 'month', 'day', 'hour', 'minute', 'day_of_year', 'number_original', 'area_original']
+
+
+
 
 
 def compute_percentile (x, var_base) :
@@ -27,7 +30,7 @@ def compute_percentile (x, var_base) :
 if __name__ == '__main__':
     start_time = datetime.datetime.now()
 
-    print('use_anomaly', args.use_anomaly)
+    print(f'MAKE PERCENTILE {args.property}! use_anomaly is', args.use_anomaly)
 
     # path and prefix of the names
     path = f'../organization/output/merged/{args.dataset}/{args.property}/'
@@ -40,10 +43,12 @@ if __name__ == '__main__':
     file_names.sort()
 
 
-    # use only half od the files if needed (because they may be too many)
-    if args.split=='1' : file_names = file_names[                         :int( len(file_names)/2 ) ]
-    if args.split=='2' : file_names = file_names[ int( len(file_names)/2 ):                         ]
+    # use only half of the files if needed (because they may be too many)
+    if args.split=='1' : file_names = file_names[                          : int(  len(file_names)/3 ) ]
+    if args.split=='2' : file_names = file_names[ int(  len(file_names)/3 ): int(2*len(file_names)/3 ) ]
+    if args.split=='3' : file_names = file_names[ int(2*len(file_names)/3 ):                           ]
 
+#    print('TEST', file_names)
 
 
     # file base to use for computing percentiles
@@ -53,15 +58,13 @@ if __name__ == '__main__':
 
     # loop over all the files
     for fname_extended in file_names :
+
         fname   = fname_extended.split('/')[-1]
         print(fname_extended)
 
         # read file
         df = pd.read_csv(fname_extended)
 
-        ## save number and area
-        #df['number_original']   = df['number'].to_numpy()
-        #df['area_original']     = df['area'].to_numpy()
 
 
         for vs in columns :
